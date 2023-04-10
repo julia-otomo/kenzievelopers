@@ -1,7 +1,10 @@
+import express from "express";
 import app from "./app";
 import { startDatabase } from "./database";
 
 const appPort = 3000 || process.env.APP_PORT;
+
+app.use(express.json());
 
 const server = (port: number) =>
   app.listen(port, async () => {
