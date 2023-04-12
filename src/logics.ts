@@ -2,11 +2,13 @@ import { Request, Response } from "express";
 import {
   IDeveloperCreate,
   IDeveloperInformationCreate,
+  IDeveloperPlusInformations,
   IResult,
+  IResultDeveloperInformation,
 } from "./interfaces";
 import format from "pg-format";
 import { client } from "./database";
-import { QueryConfig } from "pg";
+import { QueryConfig, QueryResult } from "pg";
 
 const createDeveloper = async (
   request: Request,
@@ -83,7 +85,7 @@ const deleteDeveloper = async (
     values: [developerId],
   };
 
-  const queryResult: IResult = await client.query(queryConfig);
+  await client.query(queryConfig);
 
   return response.status(204).send();
 };
@@ -92,21 +94,32 @@ const createDeveloperInformation = async (
   request: Request,
   response: Response
 ): Promise<Response> => {
-  const developerId: number = Number(request.params.id);
+  const devId: number = Number(request.params.id);
 
   const requestBody: IDeveloperInformationCreate = request.body;
 
-  const requestKeys: string[] = Object.keys(requestBody);
-  const requestValues: Array<
-    string | number | "Windows" | "Linux" | "MacOs" | Date
-  > = Object.values(requestBody);
+  if (!["Windows", "Linux", "MacOS"].includes(requestBody.preferredOS)) {
+    return response.status(400).json({
+      message: "Invalid OS option.",
+      options: ["Windows", "Linux", "MacOS"],
+    });
+  }
+
+  const requestData: IDeveloperInformationCreate & { developerId: number } = {
+    ...requestBody,
+    developerId: devId,
+  };
+
+  const requestKeys: string[] = Object.keys(requestData);
+  const requestValues: Array<string | number | Date> =
+    Object.values(requestData);
 
   const newDevInformation: string = `
     INSERT INTO 
         developer_infos 
-        (%I, "developerId")
+        (%I)
     VALUES
-        (%L, $1)
+        (%L)
     RETURNING *
   `;
 
@@ -116,14 +129,46 @@ const createDeveloperInformation = async (
     requestValues
   );
 
-  const queryConfig: QueryConfig = {
-    text: queryFormat,
-    values: [developerId],
-  };
-
-  const queryResult: IResult = await client.query(queryConfig);
+  const queryResult: IResultDeveloperInformation = await client.query(
+    queryFormat
+  );
 
   return response.status(201).json(queryResult.rows[0]);
 };
 
-export { createDeveloper, updateDeveloper, deleteDeveloper };
+const getDeveloperById = async (
+  request: Request,
+  response: Response
+): Promise<Response> => {
+  const devId: number = Number(request.params.id);
+
+  const getDev: string = `
+    SELECT 
+      d.id AS "developerId", d."name" AS "developerName", d."email" AS "developerEmail", di."developerSince" AS "developerInfoDeveloperSince", di."preferredOS" AS "developerInfoPreferredOS"
+    FROM 
+      developers d 
+    LEFT JOIN
+      developer_infos di 
+    ON
+      d.id = di."developerId"
+    WHERE d.id = $1
+  `;
+
+  const queryConfig: QueryConfig = {
+    text: getDev,
+    values: [devId],
+  };
+
+  const queryResult: QueryResult<IDeveloperPlusInformations> =
+    await client.query(queryConfig);
+
+  return response.json(queryResult.rows[0]);
+};
+
+export {
+  createDeveloper,
+  updateDeveloper,
+  deleteDeveloper,
+  createDeveloperInformation,
+  getDeveloperById,
+};

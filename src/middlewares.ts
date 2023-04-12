@@ -18,13 +18,6 @@ const verifyId = async (
     WHERE id = $1   
   `;
 
-  if (
-    request.route.path === "/developers/:id/infos" &&
-    request.method === "POST"
-  ) {
-    devId = request.body.developerId;
-  }
-
   const queryConfig: QueryConfig = {
     text: findDev,
     values: [devId],
@@ -103,15 +96,5 @@ const verifyDeveloperInformation = async (
 
   next();
 };
-
-// const verifyPreferredOS = async (
-//   request: Request,
-//   response: Response,
-//   next: NextFunction
-// ): Promise<Response | void> => {
-//   const requestOs: string = request.body.preferredOS;
-
-//   if (requestOs !== "Windows" || "Linux" || "MacOs" )
-// };
 
 export { verifyId, verifyEmail, verifyDeveloperInformation };

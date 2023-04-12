@@ -9,15 +9,28 @@ interface IDeveloper {
 interface IDeveloperInformation {
   id: number;
   developerSince: Date;
-  preferredOS: "Windows" | "Linux" | "MacOs";
+  preferredOS: string;
   developerId: number;
+}
+
+interface IDeveloperPlusInformations {
+  developerId: number;
+  name: string;
+  email: string;
+  developerSince: Date;
+  preferredOS: string;
 }
 
 type IResult = QueryResult<IDeveloper>;
 
+type IResultDeveloperInformation = QueryResult<IDeveloperInformation>;
+
 type IDeveloperCreate = Omit<IDeveloper, "id">;
 
-type IDeveloperInformationCreate = Omit<IDeveloperInformation, "id">;
+type IDeveloperInformationCreate = Omit<
+  IDeveloperInformation,
+  "id" | "developerId"
+>;
 
 export {
   IResult,
@@ -25,4 +38,6 @@ export {
   IDeveloperCreate,
   IDeveloperInformation,
   IDeveloperInformationCreate,
+  IResultDeveloperInformation,
+  IDeveloperPlusInformations,
 };
