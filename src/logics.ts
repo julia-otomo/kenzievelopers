@@ -120,7 +120,7 @@ const createDeveloperInformation = async (
         (%I)
     VALUES
         (%L)
-    RETURNING *
+    RETURNING *;
   `;
 
   const queryFormat: string = format(
@@ -128,6 +128,8 @@ const createDeveloperInformation = async (
     requestKeys,
     requestValues
   );
+
+  console.log(queryFormat);
 
   const queryResult: IResultDeveloperInformation = await client.query(
     queryFormat
