@@ -21,11 +21,19 @@ interface IFullProject {
   projectEndDate: Date;
   projectDeveloperId: number;
   technologyName: string;
+  technologyId: number;
 }
 
 interface ITechnology {
   id: number;
   name: string;
+}
+
+interface IProjectTechnology {
+  id: number;
+  addedIn: Date;
+  technologyId: number;
+  projectId: number;
 }
 
 type IProjectResult = QueryResult<IProject>;
@@ -38,6 +46,10 @@ type ITechnologyCreate = Omit<ITechnology, "id">;
 
 type ITechResult = QueryResult<ITechnology>;
 
+type IProjectTechnologyCreate = Omit<IProjectTechnology, "id">;
+
+type IProjectTechnologyResult = QueryResult<IProjectTechnology>;
+
 export {
   IProject,
   IProjectResult,
@@ -47,4 +59,7 @@ export {
   ITechnology,
   ITechnologyCreate,
   ITechResult,
+  IProjectTechnology,
+  IProjectTechnologyCreate,
+  IProjectTechnologyResult,
 };

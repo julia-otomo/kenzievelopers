@@ -4,8 +4,8 @@ import {
   verifyDeveloperInformation,
   verifyEmail,
   verifyId,
-  verifyIfTechnologyExistsInASpecificProject,
   verifyProjectId,
+  verifyTechnologyInProject,
   verifyTechnologyName,
 } from "./middlewares";
 import {
@@ -19,6 +19,7 @@ import {
   addNewTechnology,
   createProjects,
   deleteProject,
+  deleteTechnology,
   getProjectInformation,
   updateProject,
 } from "./projectsLogic";
@@ -54,8 +55,16 @@ app.post(
   "/projects/:id/technologies",
   verifyProjectId,
   verifyTechnologyName,
-  verifyIfTechnologyExistsInASpecificProject,
+  verifyTechnologyInProject,
   addNewTechnology
+);
+
+app.delete(
+  "/projects/:id/technologies/:name",
+  verifyProjectId,
+  verifyTechnologyName,
+  verifyTechnologyInProject,
+  deleteTechnology
 );
 
 export default app;

@@ -9,14 +9,9 @@ const verifyId = async (
   response: Response,
   next: NextFunction
 ): Promise<Response | void> => {
-  let devId: number = Number(request.params.id);
-
-  if (
-    (request.route.path === "/projects" && request.method === "POST") ||
-    "PATCH"
-  ) {
-    devId = Number(request.body.developerId);
-  }
+  const devId: number = !request.body.developerId
+    ? request.params.id
+    : request.body.developerId;
 
   const findDev: string = `
     SELECT 
@@ -28,7 +23,7 @@ const verifyId = async (
 
   const queryConfig: QueryConfig = {
     text: findDev,
-    values: [devId],
+    values: [+devId],
   };
 
   const queryResult: IResult = await client.query(queryConfig);
@@ -110,7 +105,7 @@ const verifyProjectId = async (
   response: Response,
   next: NextFunction
 ): Promise<Response | void> => {
-  const projectId: number = parseInt(request.params.id);
+  const projectId: number = Number(request.params.id);
 
   const searchProject: string = `
     SELECT
@@ -184,16 +179,18 @@ const verifyTechnologyName = async (
   next();
 };
 
-const verifyIfTechnologyExistsInASpecificProject = async (
+const verifyTechnologyInProject = async (
   request: Request,
   response: Response,
   next: NextFunction
 ): Promise<Response | void> => {
   const projectId = Number(request.params.id);
 
-  let requestName: string = request.body.name;
+  let requestName: string;
 
-  if (request.route.path === "/projects/:id/technologies/:name") {
+  if (request.method === "POST") {
+    requestName = request.body.name;
+  } else {
     requestName = request.params.name;
   }
 
@@ -221,24 +218,17 @@ const verifyIfTechnologyExistsInASpecificProject = async (
 
   const queryResult: IProjectResult = await client.query(queryConfig);
 
-  if (
-    request.route.path === "/projects/:id/technologies" &&
-    request.method === "POST"
-  ) {
-    if (queryResult.rowCount > 0) {
-      return response.status(409).json({
-        message: "This technology is already associated with the project",
-      });
-    } else {
-      console.log("alô");
-
-      next();
-    }
-  } else {
+  if (request.method === "POST" && queryResult.rowCount > 0) {
+    return response.status(409).json({
+      message: "This technology is already associated with the project",
+    });
+  } else if (request.method === "DELETE" && queryResult.rowCount === 0) {
     return response.status(400).json({
       message: "Technology not related to the project.",
     });
   }
+
+  next();
 };
 
 export {
@@ -247,5 +237,5 @@ export {
   verifyDeveloperInformation,
   verifyProjectId,
   verifyTechnologyName,
-  verifyIfTechnologyExistsInASpecificProject,
+  verifyTechnologyInProject,
 };

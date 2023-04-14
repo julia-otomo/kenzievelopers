@@ -3,12 +3,12 @@ import format from "pg-format";
 import { client } from "./database";
 import { QueryConfig, QueryResult } from "pg";
 import {
-  IFullProject,
   IFullProjectResult,
   IProjectCreate,
   IProjectResult,
+  IProjectTechnologyCreate,
+  ITechResult,
   ITechnology,
-  ITechnologyCreate,
 } from "./projectInterfaces";
 
 const createProjects = async (
@@ -135,15 +135,9 @@ const getProjectInformation = async (
 const addNewTechnology = async (
   request: Request,
   response: Response
-): Promise<Response> => {
+): Promise<Response | void> => {
   const projId: number = Number(request.params.id);
   const requestName: string = request.body.name;
-
-  const requestBody: ITechnologyCreate = request.body;
-
-  const requestKeys: string[] = Object.keys(requestBody);
-
-  const requestValues: string[] = Object.values(requestBody);
 
   const findTechId: string = `
     SELECT 
@@ -162,7 +156,104 @@ const addNewTechnology = async (
     queryConfigTechId
   );
 
-  return response.json(queryResult.rows[0]);
+  const dataTime = new Date();
+
+  const requestData: IProjectTechnologyCreate = {
+    addedIn: dataTime,
+    technologyId: Number(queryResult.rows[0].id),
+    projectId: projId,
+  };
+
+  const requestKeys: string[] = Object.keys(requestData);
+
+  const requestValues: Array<number | Date> = Object.values(requestData);
+
+  const addTech: string = `
+    INSERT INTO
+      projects_technologies
+      (%I)
+    VALUES
+      (%L)
+  `;
+
+  const queryFormat: string = format(addTech, requestKeys, requestValues);
+
+  await client.query(queryFormat);
+
+  const getCreateInformation: string = `
+    SELECT 
+      t.id "technologyId", t.name "technologyName", p.id "projectId",
+      p.name "projectName", p.description "projectDescription",
+      p."estimatedTime" "projectEstimatedTime", p.repository 
+      "projectRepository", p."startDate" "projectStartDate",
+      p."endDate" "projectEndDate"
+    FROM
+      projects p
+    LEFT JOIN
+      projects_technologies pt
+    ON
+      p.id = pt."projectId"
+    LEFT JOIN
+      technologies t
+    ON
+      pt."technologyId" = t.id
+    WHERE
+      p.id = $1 AND t.id = $2
+  `;
+
+  const queryProjectConfig: QueryConfig = {
+    text: getCreateInformation,
+    values: [projId, Number(queryResult.rows[0].id)],
+  };
+
+  const queryJoinResult: IFullProjectResult = await client.query(
+    queryProjectConfig
+  );
+
+  return response.status(201).json(queryJoinResult.rows[0]);
+};
+
+const deleteTechnology = async (
+  request: Request,
+  response: Response
+): Promise<Response> => {
+  const projId: number = Number(request.params.id);
+
+  const techName: string = request.params.name;
+
+  const findTechId: string = `
+    SELECT 
+      id
+    FROM
+      technologies
+    WHERE
+      name = $1;
+  `;
+
+  const queryTechConfig: QueryConfig = {
+    text: findTechId,
+    values: [techName],
+  };
+
+  const querytechResult: QueryResult<Partial<ITechnology>> = await client.query(
+    queryTechConfig
+  );
+
+  const deleteQuery: string = `
+    DELETE FROM
+      projects_technologies
+    WHERE
+    "projectId" = $1 AND "technologyId" = $2;
+  `;
+
+  const queryProjectConfig: QueryConfig = {
+    text: deleteQuery,
+    values: [projId, Number(querytechResult.rows[0].id)],
+  };
+
+  await client.query(queryProjectConfig);
+
+  return response.status(204).send();
 };
 
 export {
@@ -171,4 +262,5 @@ export {
   deleteProject,
   getProjectInformation,
   addNewTechnology,
+  deleteTechnology,
 };
