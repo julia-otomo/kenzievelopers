@@ -4,6 +4,9 @@ import {
   verifyDeveloperInformation,
   verifyEmail,
   verifyId,
+  verifyIfTechnologyExistsInASpecificProject,
+  verifyProjectId,
+  verifyTechnologyName,
 } from "./middlewares";
 import {
   createDeveloper,
@@ -11,7 +14,14 @@ import {
   deleteDeveloper,
   getDeveloperById,
   updateDeveloper,
-} from "./logics";
+} from "./developersLogic";
+import {
+  addNewTechnology,
+  createProjects,
+  deleteProject,
+  getProjectInformation,
+  updateProject,
+} from "./projectsLogic";
 
 const app: Application = express();
 
@@ -30,6 +40,22 @@ app.post(
   verifyId,
   verifyDeveloperInformation,
   createDeveloperInformation
+);
+
+app.get("/projects/:id", verifyProjectId, getProjectInformation);
+
+app.post("/projects", verifyId, createProjects);
+
+app.patch("/projects/:id", verifyProjectId, verifyId, updateProject);
+
+app.delete("/projects/:id", verifyProjectId, deleteProject);
+
+app.post(
+  "/projects/:id/technologies",
+  verifyProjectId,
+  verifyTechnologyName,
+  verifyIfTechnologyExistsInASpecificProject,
+  addNewTechnology
 );
 
 export default app;

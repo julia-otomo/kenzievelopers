@@ -15,10 +15,10 @@ interface IDeveloperInformation {
 
 interface IDeveloperPlusInformations {
   developerId: number;
-  name: string;
-  email: string;
-  developerSince: Date;
-  preferredOS: string;
+  developerName: string;
+  developerEmail: string;
+  developerInfoDeveloperSince: Date;
+  developerInfoPreferredOS: string;
 }
 
 type IResult = QueryResult<IDeveloper>;

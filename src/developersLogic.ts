@@ -5,7 +5,7 @@ import {
   IDeveloperPlusInformations,
   IResult,
   IResultDeveloperInformation,
-} from "./interfaces";
+} from "./developerInterfaces";
 import format from "pg-format";
 import { client } from "./database";
 import { QueryConfig, QueryResult } from "pg";
@@ -39,7 +39,7 @@ const updateDeveloper = async (
   request: Request,
   response: Response
 ): Promise<Response> => {
-  const requestBody: IDeveloperCreate = request.body;
+  const requestBody: Partial<IDeveloperCreate> = request.body;
   const developerId: number = Number(request.params.id);
 
   const requestKeys: string[] = Object.keys(requestBody);
@@ -128,8 +128,6 @@ const createDeveloperInformation = async (
     requestKeys,
     requestValues
   );
-
-  console.log(queryFormat);
 
   const queryResult: IResultDeveloperInformation = await client.query(
     queryFormat
